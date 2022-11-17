@@ -23,19 +23,19 @@ def convert(size, box):
     h = h*dh
     return (x,y,w,h)
 def convert_annotation(year, image_id):
-    in_file = open('Train_Image/%s/Annotations/%s.xml'%(year, image_id))
-    out_file = open('Train_Image/%s/labels/%s.txt'%(year, image_id), 'w')
+    in_file = open(f'Train_Image/{year}/Annotations/{image_id}.xml')
+    out_file = open(f'Train_Image/{year}/labels/{image_id}.txt', 'w')
     is_empty = 0    #默认设置为0，表示文件标注为空
     tree=ET.parse(in_file)
     root = tree.getroot()
     size = root.find('size')
     w = int(size.find('width').text)
     h = int(size.find('height').text)
-    if root.find('object')==None:           #
+    if root.find('object') is None:       #
         print("删除以下错误xml文件，请重新生成train.txt val.txt test.txt")
         in_file.close()
-        os.remove(os_removepath+'/Train_Image/%s/Annotations/%s.xml'%(year,image_id)) 
-        print(os_removepath+'/Train_Image/%s/Annotations/%s.xml'%(year,image_id))
+        os.remove(f'{os_removepath}/Train_Image/{year}/Annotations/{image_id}.xml')
+        print(f'{os_removepath}/Train_Image/{year}/Annotations/{image_id}.xml')
     for obj in root.iter('object'):
         cls = obj.find('name').text
         if cls not in classes:#如果不包含，直接退出
@@ -51,24 +51,29 @@ def convert_annotation(year, image_id):
             continue
         is_empty = 1
         bb = convert((w,h), b)
-        out_file.write(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
-    if(is_empty==0):
+        out_file.write(f"{str(cls_id)} " + " ".join([str(a) for a in bb]) + '\n')
+    if (is_empty==0):
         print("删除以下错误xml文件，请重新生成train.txt val.txt test.txt")
         in_file.close()
-        os.remove(os_removepath+'/Train_Image/%s/Annotations/%s.xml'%(year,image_id)) 
-        print(os_removepath+'/Train_Image/%s/Annotations/%s.xml'%(year,image_id))
+        os.remove(f'{os_removepath}/Train_Image/{year}/Annotations/{image_id}.xml')
+        print(f'{os_removepath}/Train_Image/{year}/Annotations/{image_id}.xml')
 
 wd = getcwd()
 
 for year, image_set in sets:
-    if not os.path.exists('Train_Image/%s/labels/'%(year)):
-        os.makedirs('Train_Image/%s/labels/'%(year))
+    if not os.path.exists(f'Train_Image/{year}/labels/'):
+        os.makedirs(f'Train_Image/{year}/labels/')
     #image_ids = open('Train_Image/%s/ImageSets/Main/%s.txt'%(year, image_set)).read().strip().split()
-    image_ids = open('Train_Image/%s/ImageSets/Main/%s.txt'%(year, image_set)).read().strip().split()
+    image_ids = (
+        open(f'Train_Image/{year}/ImageSets/Main/{image_set}.txt')
+        .read()
+        .strip()
+        .split()
+    )
 
-    list_file = open('%s_%s.txt'%(year, image_set), 'w')
-    for image_id in image_ids:
-        list_file.write('%s/Train_Image/%s/JPEGImages/%s.jpg\n'%(wd, year, image_id))
-        convert_annotation(year, image_id)
-    list_file.close()
+
+    with open(f'{year}_{image_set}.txt', 'w') as list_file:
+        for image_id in image_ids:
+            list_file.write('%s/Train_Image/%s/JPEGImages/%s.jpg\n'%(wd, year, image_id))
+            convert_annotation(year, image_id)
 
